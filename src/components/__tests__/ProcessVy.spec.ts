@@ -18,9 +18,9 @@ const ok: HamtaStegResultat = {
     processId: "vab",
     processnamn: "Vård av boskap",
     steg: [
-      { id: "registrera-ansokan", rubrik: "Registrera ansökan", status: "KLAR" },
-      { id: "kontrollera", rubrik: "Kontrollera rätt till försäkring", status: "PAGAR" },
-      { id: "besluta", rubrik: "Besluta", status: "KOMMANDE" },
+      { id: "maskinell-kontroll", rubrik: "Maskinell kontroll av rätt till försäkring", status: "KLAR" },
+      { id: "manuell-kontroll", rubrik: "Manuell kontroll av rätt till försäkring", status: "PAGAR" },
+      { id: "bekrafta-beslut", rubrik: "Bekräfta beslut", status: "KOMMANDE" },
     ],
   },
 };
@@ -50,7 +50,7 @@ describe("ProcessVy", () => {
     expect(fetchMock).toHaveBeenCalledWith(aktivitetId, expect.any(AbortSignal));
     const rubriker = wrapper.findAll(".steg-indikator__steg").map((s) => s.text());
     expect(rubriker).toHaveLength(3);
-    expect(rubriker[0]).toContain("Registrera ansökan");
+    expect(rubriker[0]).toContain("Maskinell kontroll av rätt till försäkring");
     expect(wrapper.find("nav").attributes("aria-label")).toBe(
       "Steg i processen Vård av boskap",
     );

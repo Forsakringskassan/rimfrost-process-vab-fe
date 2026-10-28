@@ -13,14 +13,14 @@ const giltigtSvar = {
   processId: "vab",
   processnamn: "Vård av boskap",
   steg: [
-    { id: "registrera-ansokan", rubrik: "Registrera ansökan", status: "KLAR" },
+    { id: "maskinell-kontroll", rubrik: "Maskinell kontroll av rätt till försäkring", status: "KLAR" },
     {
-      id: "kontrollera-ratt-till-forsakring",
-      rubrik: "Kontrollera rätt till försäkring",
-      beskrivning: "Handläggaren kontrollerar att den försäkrade har rätt till ersättning.",
+      id: "manuell-kontroll",
+      rubrik: "Manuell kontroll av rätt till försäkring",
+      beskrivning: "Handläggaren kompletterar yrkandet vid behov och bedömer rätten till försäkring när den maskinella kontrollen inte räcker.",
       status: "PAGAR",
     },
-    { id: "besluta", rubrik: "Besluta", status: "KOMMANDE" },
+    { id: "bekrafta-beslut", rubrik: "Bekräfta beslut", status: "KOMMANDE" },
   ],
 };
 
