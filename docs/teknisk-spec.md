@@ -1,9 +1,9 @@
-# Teknisk spec — Mikrofrontend för VAH:s processvy (PVAHFE)
+# Teknisk spec — Mikrofrontend för VAB:s processvy (PVABFE)
 
 ## Översikt
 
 Vue 3 + TypeScript-mikrofrontend som portalen laddar via module federation. Den hämtar
-processens steg från `rimfrost-process-vah-bff` och visar dem i stegindikatorn. Ingen egen
+processens steg från `rimfrost-process-vab-bff` och visar dem i stegindikatorn. Ingen egen
 routing, inget eget tillstånd utöver komponentens, ingen databas och ingen meddelandeintegration.
 Repot är skapat från `rimfrost-template-micro-fe`.
 
@@ -25,7 +25,7 @@ src/
 
 | Egenskap | Värde |
 |---|---|
-| Scope | `processVahApp` |
+| Scope | `processVabApp` |
 | Exponerad modul | `./ProcessVy` |
 | Props | `handlaggningId?: string \| null`, `aktivitetId?: string \| null` |
 | Delade singletons | `vue`, `@fkui/vue` |
@@ -59,8 +59,8 @@ Ingen.
 
 | Egenskap | Beskrivning | Standardvärde |
 |---|---|---|
-| `VITE_BFF_URL` | BFF-url vid lokal utveckling. Tom i `.env.development`, så att anropen går via Vite-proxyn till `http://localhost:9005` | — |
-| `RUNTIME_BFF_URL` (`window.__PROCESS_VAH_FE_ENV__`) | BFF-url vid körning i container | — |
+| `VITE_BFF_URL` | BFF-url vid lokal utveckling. Tom i `.env.development`, så att anropen går via Vite-proxyn till `http://localhost:9006` | — |
+| `RUNTIME_BFF_URL` (`window.__PROCESS_VAB_FE_ENV__`) | BFF-url vid körning i container | — |
 | `VITE_DEV_HANDLAGGNING_ID` | Fallback-id vid fristående utvecklingsläge | — |
 | `VITE_DEV_AKTIVITET_ID` | Fallback-aktivitets-ID vid fristående utvecklingsläge | — |
 
