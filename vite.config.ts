@@ -7,7 +7,7 @@ import vueDevTools from "vite-plugin-vue-devtools";
 export default defineConfig({
   plugins: [
     federation({
-      name: "processVahApp",
+      name: "processVabApp",
       filename: "remoteEntry.js",
       exposes: {
         "./ProcessVy": "./src/components/ProcessVy.vue",
@@ -29,7 +29,7 @@ export default defineConfig({
     },
   },
   preview: {
-    port: process.env.VITE_APP_PORT ? parseInt(process.env.VITE_APP_PORT) : 3041,
+    port: process.env.VITE_APP_PORT ? parseInt(process.env.VITE_APP_PORT) : 3043,
     cors: true,
     headers: {
       "Access-Control-Allow-Origin": "*",
@@ -38,13 +38,13 @@ export default defineConfig({
   server: {
     proxy: {
       "/api": {
-        target: "http://localhost:9005",
+        target: "http://localhost:9006",
         changeOrigin: true,
       },
     },
     port: process.env.VITE_APP_PORT_DEV
       ? parseInt(process.env.VITE_APP_PORT_DEV)
-      : 3040,
+      : 3042,
     cors: true,
     headers: {
       "Access-Control-Allow-Origin": "*",

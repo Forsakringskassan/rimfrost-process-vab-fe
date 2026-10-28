@@ -6,7 +6,7 @@ import { tillStegIndikator } from "../utils/processSteg";
 
 /**
  * Processvyn som portalen laddar bredvid uppgiftens mikrofrontend. Visar var i
- * VAH-processen ärendet befinner sig, utifrån aktiviteten som uppgiften skapades i.
+ * VAB-processen ärendet befinner sig, utifrån aktiviteten som uppgiften skapades i.
  */
 const props = defineProps<{
   /** Tas emot från portalen. Används inte ännu, stegen bestäms av aktivitetId. */

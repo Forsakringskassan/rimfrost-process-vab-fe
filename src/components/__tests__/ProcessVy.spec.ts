@@ -15,8 +15,8 @@ const aktivitetId = "3f2b8c1e-4d5a-4b6c-9e7f-1a2b3c4d5e6f";
 const ok: HamtaStegResultat = {
   typ: "ok",
   data: {
-    processId: "vah",
-    processnamn: "Vård av husdjur",
+    processId: "vab",
+    processnamn: "Vård av boskap",
     steg: [
       { id: "registrera-ansokan", rubrik: "Registrera ansökan", status: "KLAR" },
       { id: "kontrollera", rubrik: "Kontrollera rätt till försäkring", status: "PAGAR" },
@@ -52,7 +52,7 @@ describe("ProcessVy", () => {
     expect(rubriker).toHaveLength(3);
     expect(rubriker[0]).toContain("Registrera ansökan");
     expect(wrapper.find("nav").attributes("aria-label")).toBe(
-      "Steg i processen Vård av husdjur",
+      "Steg i processen Vård av boskap",
     );
   });
 

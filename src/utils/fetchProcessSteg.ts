@@ -2,7 +2,7 @@ import { env, ensureEnvLoaded } from "../config/env";
 import { type ProcessvySteg, arProcessvySteg } from "./processSteg";
 
 /**
- * okand-aktivitet: BFF:en svarade 404, process-vah känner inte till aktiviteten.
+ * okand-aktivitet: BFF:en svarade 404, process-vab känner inte till aktiviteten.
  * fel: allt annat som gör att stegen inte kan visas (nätverksfel, felstatus, oväntat svar).
  */
 export type HamtaStegResultat =

@@ -3,8 +3,8 @@ import { type ProcessStegStatus, type ProcessvySteg, tillStegIndikator } from ".
 
 function svar(...statusar: ProcessStegStatus[]): ProcessvySteg {
   return {
-    processId: "vah",
-    processnamn: "Vård av husdjur",
+    processId: "vab",
+    processnamn: "Vård av boskap",
     steg: statusar.map((status, i) => ({ id: `steg-${i}`, rubrik: `Steg ${i}`, status })),
   };
 }

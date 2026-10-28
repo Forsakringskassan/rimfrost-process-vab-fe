@@ -10,8 +10,8 @@ vi.mock("../../config/env", () => ({
 const aktivitetId = "3f2b8c1e-4d5a-4b6c-9e7f-1a2b3c4d5e6f";
 
 const giltigtSvar = {
-  processId: "vah",
-  processnamn: "Vård av husdjur",
+  processId: "vab",
+  processnamn: "Vård av boskap",
   steg: [
     { id: "registrera-ansokan", rubrik: "Registrera ansökan", status: "KLAR" },
     {
@@ -100,7 +100,7 @@ describe("fetchProcessSteg", () => {
   });
 
   it.each([
-    ["steg saknas", { processId: "vah", processnamn: "Vård av husdjur" }],
+    ["steg saknas", { processId: "vab", processnamn: "Vård av boskap" }],
     ["okänd status", { ...giltigtSvar, steg: [{ id: "a", rubrik: "A", status: "OKAND" }] }],
     ["rubrik saknas", { ...giltigtSvar, steg: [{ id: "a", status: "KLAR" }] }],
   ])("returnerar fel när svaret har fel format (%s)", async (_, body) => {
