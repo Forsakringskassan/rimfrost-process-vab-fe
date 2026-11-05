@@ -49,7 +49,7 @@ med portalens konfiguration.
 
 | Variabel | Beskrivning | Standardvärde |
 |---|---|---|
-| `VITE_BFF_URL` | BFF-url vid lokal utveckling. Tom i `.env.development`, så att anropen går via Vite-proxyn till `http://localhost:9006` | — |
+| `VITE_BFF_URL` | BFF-url vid lokal utveckling. `http://localhost:9006` i `.env` (bygget som portalen laddar). Tom i `.env.development`, så att `npm run dev` går via Vite-proxyn | — |
 | `RUNTIME_BFF_URL` | BFF-url vid körning i container, sätts i `runtime-config.js` | — |
 | `VITE_DEV_AKTIVITET_ID` | Aktivitets-ID i fristående utvecklingsläge. Saknas det visas ingen processvy | Manuell kontroll i `vab.bpmn` |
 | `VITE_DEV_HANDLAGGNING_ID` | Handläggnings-ID i fristående utvecklingsläge | — |

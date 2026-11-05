@@ -1,4 +1,5 @@
-# LOCAL TESTING ONLY — mirrors the Dockerfile generated inline by the CI workflow.
+# LOCAL TESTING ONLY — based on the Dockerfile generated inline by the CI workflow, but not identical
+# (e.g. adds a CORS header so a locally running portal can load remoteEntry.js).
 # Run `npm run build` first to populate dist/, then `docker build .` to test locally.
 # The authoritative build is defined in .github/workflows/.
 

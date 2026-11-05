@@ -59,7 +59,7 @@ Ingen.
 
 | Egenskap | Beskrivning | Standardvärde |
 |---|---|---|
-| `VITE_BFF_URL` | BFF-url vid lokal utveckling. Tom i `.env.development`, så att anropen går via Vite-proxyn till `http://localhost:9006` | — |
+| `VITE_BFF_URL` | BFF-url vid lokal utveckling. `http://localhost:9006` i `.env` (bygget som portalen laddar). Tom i `.env.development`, så att `npm run dev` går via Vite-proxyn | — |
 | `RUNTIME_BFF_URL` (`window.__PROCESS_VAB_FE_ENV__`) | BFF-url vid körning i container | — |
 | `VITE_DEV_HANDLAGGNING_ID` | Fallback-id vid fristående utvecklingsläge | — |
 | `VITE_DEV_AKTIVITET_ID` | Fallback-aktivitets-ID vid fristående utvecklingsläge | — |
@@ -74,4 +74,3 @@ Ingen egen hälsokontroll — statisk frontend, hälsa avgörs av webbservern so
 |---|---|
 | Anropet till BFF:en skickar ingen `Authorization`-header, på samma sätt som reglernas mikrofrontends | Skicka med handläggarens token när portalen erbjuder det till mikrofrontends |
 | `handlaggningId` tas emot men används inte | Använd när processvyn behöver ärendespecifik information |
-| `vue-router` är ett beroende men används inte (ärvt från mallen) | Ta bort beroendet |

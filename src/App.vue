@@ -8,8 +8,8 @@ const props = defineProps<{
 }>();
 
 const isDev = import.meta.env.DEV;
-const handlaggningId = props.handlaggningId || import.meta.env.VITE_DEV_HANDLAGGNING_ID || null;
-const aktivitetId = props.aktivitetId || import.meta.env.VITE_DEV_AKTIVITET_ID || null;
+const handlaggningId = props.handlaggningId || (isDev ? import.meta.env.VITE_DEV_HANDLAGGNING_ID : null) || null;
+const aktivitetId = props.aktivitetId || (isDev ? import.meta.env.VITE_DEV_AKTIVITET_ID : null) || null;
 </script>
 
 <template>
