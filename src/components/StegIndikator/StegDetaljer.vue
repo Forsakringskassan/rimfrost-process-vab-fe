@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import StegTooltip from "./StegTooltip.vue";
 import { type StegStatus, statusText } from "./steg";
 
 /**
@@ -13,6 +14,8 @@ defineProps<{
   status: StegStatus;
   /** Chevron som pekar från steget mot panelen. "ingen" när föräldern ritar den. */
   pil: "ingen" | "hoger" | "ned";
+  /** Hovringstext på chevronen. Tom: ingen tooltip. */
+  stangText?: string;
 }>();
 
 defineEmits<{ stang: [] }>();
@@ -27,16 +30,26 @@ defineEmits<{ stang: [] }>();
     tabindex="-1"
     @keydown.esc="$emit('stang')"
   >
-    <svg
+    <!-- Stänger panelen med musen. Tangentbordet använder stegknappen eller Esc. -->
+    <StegTooltip
       v-if="pil !== 'ingen'"
-      class="steg-detaljer__chevron"
-      viewBox="0 0 24 24"
+      class="steg-detaljer__chevronplats"
+      :text="stangText"
       aria-hidden="true"
-      focusable="false"
     >
-      <polyline v-if="pil === 'hoger'" points="8 5 15 12 8 19" />
-      <polyline v-else points="5 8 12 15 19 8" />
-    </svg>
+      <button
+        type="button"
+        class="steg-detaljer__chevronknapp"
+        tabindex="-1"
+        aria-hidden="true"
+        @click="$emit('stang')"
+      >
+        <svg class="steg-detaljer__chevron" viewBox="0 0 24 24" focusable="false">
+          <polyline v-if="pil === 'hoger'" points="8 5 15 12 8 19" />
+          <polyline v-else points="5 8 12 15 19 8" />
+        </svg>
+      </button>
+    </StegTooltip>
     <div class="steg-detaljer__innehall">
       <p class="steg-detaljer__rubrik">
         {{ rubrik }}
@@ -92,14 +105,41 @@ defineEmits<{ stang: [] }>();
   stroke-linejoin: round;
 }
 
+.steg-detaljer__chevronknapp {
+  all: unset;
+  display: block;
+  width: fit-content;
+  cursor: pointer;
+  border-radius: 50%;
+}
+
+.steg-detaljer__chevronknapp:hover {
+  background: var(--farg-kommande-bakgrund, #eceefa);
+}
+
+/* Vid hovring vänds chevronen mot steget: ett klick fäller ihop vyn. */
+.steg-detaljer__chevronknapp:hover .steg-detaljer__chevron {
+  rotate: 180deg;
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .steg-detaljer__chevronknapp .steg-detaljer__chevron {
+    transition: rotate 0.2s ease;
+  }
+}
+
+.steg-detaljer__chevronplats {
+  width: fit-content;
+}
+
 /* Chevronen ligger i mellanrummet till vänster om panelen, i höjd med cirkeln. */
-.steg-detaljer--pil-hoger .steg-detaljer__chevron {
+.steg-detaljer--pil-hoger .steg-detaljer__chevronplats {
   position: absolute;
   left: calc(-1 * (var(--chevron, 1.5rem) + 0.375rem));
   top: var(--chevron-top, 0.5rem);
 }
 
-.steg-detaljer--pil-ned .steg-detaljer__chevron {
+.steg-detaljer--pil-ned .steg-detaljer__chevronplats {
   margin: 0 0 0.25rem;
 }
 

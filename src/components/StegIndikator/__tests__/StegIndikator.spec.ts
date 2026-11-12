@@ -121,9 +121,285 @@ describe("StegIndikator", () => {
     await setBredd(1000);
     await wrapper.findAll("button")[3].trigger("click");
 
-    const chevron = wrapper.find(".steg-indikator__chevronrad svg");
-    expect(chevron.exists()).toBe(true);
+    const chevron = wrapper.find(".steg-indikator__chevronplats");
+    expect(chevron.find(".steg-indikator__chevronknapp").exists()).toBe(true);
     expect(chevron.attributes("style")).toContain("grid-column: 4");
+  });
+
+  it("closes the panel when the horizontal chevron is clicked", async () => {
+    const wrapper = mountIndikator();
+    await setBredd(1000);
+    await wrapper.findAll("li button")[3].trigger("click");
+
+    await wrapper.find(".steg-indikator__chevronknapp").trigger("click");
+
+    expect(wrapper.find(".steg-detaljer").exists()).toBe(false);
+    expect(wrapper.emitted("update:valtSteg")?.at(-1)).toEqual([null]);
+  });
+
+  it("closes the panel when the chevron next to it is clicked in vertical layout", async () => {
+    const wrapper = mountIndikator({ orientering: "vertikal" });
+    await setBredd(1000);
+    await wrapper.findAll("li button")[1].trigger("click");
+
+    await wrapper.find(".steg-detaljer__chevronknapp").trigger("click");
+
+    expect(wrapper.find(".steg-detaljer").exists()).toBe(false);
+  });
+
+  describe("understeg", () => {
+    const medUndersteg: Steg[] = [
+      steg[0],
+      {
+        id: "b",
+        rubrik: "Bedömning",
+        understeg: [
+          { id: "b1", rubrik: "Folkbokföring", status: "klar" },
+          { id: "b2", rubrik: "Rätt till försäkring", status: "aktiv" },
+          { id: "b3", rubrik: "Anställning", status: "kommande" },
+          { id: "b4", rubrik: "Dagar kvar", status: "kommande" },
+        ],
+      },
+      steg[2],
+    ];
+
+    it("fills the active step's circle with the share of done understeg", () => {
+      const wrapper = mountIndikator({ steg: medUndersteg, aktivtSteg: 1 });
+      const cirkel = wrapper.findAll(".steg-indikator__cirkel")[1];
+
+      expect(cirkel.classes()).toContain("steg-indikator__cirkel--delvis");
+      expect(cirkel.attributes("style")).toContain("--framsteg: 25%");
+      expect(wrapper.findAll("li")[1].text()).toContain("1 av 4 klara");
+    });
+
+    it("does not fill the circle when no understeg is done or the step is not active", () => {
+      const ingaKlara = medUndersteg.map((s) =>
+        s.understeg
+          ? { ...s, understeg: s.understeg.map((u) => ({ ...u, status: "kommande" as const })) }
+          : s,
+      );
+      const aktiv = mountIndikator({ steg: ingaKlara, aktivtSteg: 1 });
+      expect(aktiv.findAll(".steg-indikator__cirkel--delvis")).toHaveLength(0);
+
+      const klar = mountIndikator({ steg: medUndersteg, aktivtSteg: 2 });
+      expect(klar.findAll(".steg-indikator__cirkel--delvis")).toHaveLength(0);
+    });
+
+    it("describes steps with understeg as opening, then closing, the delsteg view", async () => {
+      const wrapper = mountIndikator({ steg: medUndersteg, aktivtSteg: 1 });
+      await setBredd(1000);
+      const knapp = () => wrapper.findAll("li .steg-indikator__knapp")[1];
+      const beskrivning = () =>
+        wrapper.find(`#${knapp().attributes("aria-describedby")}`).text();
+
+      expect(beskrivning()).toBe("Öppna vy för delsteg");
+
+      await knapp().trigger("click");
+
+      expect(beskrivning()).toBe("Stäng vy för delsteg");
+      expect(wrapper.find(".steg-indikator__chevronplats [role='tooltip']").text()).toBe(
+        "Stäng vy för delsteg",
+      );
+    });
+
+    it("has no tooltip on steps without understeg", async () => {
+      const wrapper = mountIndikator({ steg: medUndersteg, aktivtSteg: 1 });
+      await setBredd(1000);
+      const knapp = wrapper.findAll("li .steg-indikator__knapp")[0];
+
+      expect(knapp.attributes("aria-describedby")).toBeUndefined();
+      await knapp.trigger("click");
+      expect(wrapper.find(".steg-indikator__chevronplats [role='tooltip']").exists()).toBe(false);
+    });
+
+    it("expands an understeg with its own understeg inline, closed by default", async () => {
+      const nestad: Steg[] = [
+        {
+          id: "b",
+          rubrik: "Bedömning",
+          understeg: [
+            {
+              id: "m",
+              rubrik: "Manuell kontroll",
+              status: "aktiv",
+              understeg: [
+                { id: "m1", rubrik: "Komplettera", status: "klar" },
+                { id: "m2", rubrik: "Bedöm", status: "aktiv" },
+                { id: "m3", rubrik: "Dokumentera", status: "kommande" },
+              ],
+            },
+          ],
+        },
+      ];
+      const wrapper = mountIndikator({ steg: nestad, aktivtSteg: 0 });
+      await setBredd(1000);
+      await wrapper.findAll("li .steg-indikator__knapp")[0].trigger("click");
+
+      const knapp = wrapper.find(".understeg__knapp");
+      expect(knapp.attributes("aria-expanded")).toBe("false");
+      expect(knapp.text()).toContain("1 av 3 klara");
+      expect(wrapper.find(".understeg__markor--delvis").attributes("style")).toContain(
+        "--framsteg: 33.3",
+      );
+      expect(wrapper.find(".understeg--niva-2").exists()).toBe(false);
+
+      await knapp.trigger("click");
+
+      expect(knapp.attributes("aria-expanded")).toBe("true");
+      const inre = wrapper.find(".understeg--niva-2");
+      expect(inre.attributes("id")).toBe(knapp.attributes("aria-controls"));
+      expect(inre.findAll(".understeg__steg")).toHaveLength(3);
+      expect(wrapper.find(`#${knapp.attributes("aria-describedby")}`).text()).toBe(
+        "Stäng vy för delsteg",
+      );
+    });
+
+    it("shows the description only for the active understeg", async () => {
+      const medBeskrivning: Steg[] = [
+        {
+          id: "b",
+          rubrik: "Bedömning",
+          understeg: [
+            { id: "b1", rubrik: "Folkbokföring", beskrivning: "Om folkbokföring", status: "klar" },
+            { id: "b2", rubrik: "Anställning", beskrivning: "Om anställning", status: "aktiv" },
+            { id: "b3", rubrik: "Dagar kvar", beskrivning: "Om dagar", status: "kommande" },
+          ],
+        },
+      ];
+      const wrapper = mountIndikator({ steg: medBeskrivning, aktivtSteg: 0 });
+      await wrapper.findAll("li .steg-indikator__knapp")[0].trigger("click");
+
+      const beskrivningar = wrapper.findAll(".understeg__beskrivning");
+      expect(beskrivningar.map((b) => b.text())).toEqual(["Om anställning"]);
+      expect(wrapper.findAll(".understeg__status").map((s) => s.text())).toEqual(["Pågår"]);
+    });
+
+    it("marks an expanded understeg as open so its chevron points up", async () => {
+      const nestad: Steg[] = [
+        {
+          id: "b",
+          rubrik: "Bedömning",
+          understeg: [
+            {
+              id: "m",
+              rubrik: "Manuell kontroll",
+              status: "kommande",
+              understeg: [{ id: "m1", rubrik: "Bedöm", status: "kommande" }],
+            },
+          ],
+        },
+      ];
+      const wrapper = mountIndikator({ steg: nestad, aktivtSteg: 0 });
+      await wrapper.findAll("li .steg-indikator__knapp")[0].trigger("click");
+      const rad = () => wrapper.find(".understeg__steg");
+      expect(rad().classes()).not.toContain("understeg__steg--oppen");
+
+      await wrapper.find(".understeg__knapp").trigger("click");
+      expect(rad().classes()).toContain("understeg__steg--oppen");
+
+      await wrapper.find(".understeg__knapp").trigger("click");
+      expect(rad().classes()).not.toContain("understeg__steg--oppen");
+      expect(wrapper.find(".understeg--niva-2").exists()).toBe(false);
+    });
+
+    it("closes the panel when the chevron above it is clicked in compact layout", async () => {
+      const wrapper = mountIndikator({
+        steg: medUndersteg,
+        aktivtSteg: 1,
+        minStegBredd: 100,
+        kompaktBredd: 300,
+      });
+      await setBredd(299);
+      await wrapper.findAll("li .steg-indikator__knapp")[1].trigger("click");
+
+      const chevron = wrapper.find(".steg-detaljer--pil-ned .steg-detaljer__chevronknapp");
+      expect(chevron.attributes("tabindex")).toBe("-1");
+      await chevron.trigger("click");
+
+      expect(wrapper.find(".steg-detaljer").exists()).toBe(false);
+    });
+
+    it("hides the tooltip on Escape", async () => {
+      vi.useFakeTimers();
+      try {
+        const wrapper = mountIndikator({ steg: medUndersteg, aktivtSteg: 1 });
+        const tooltip = wrapper.findAll(".steg-tooltip")[1];
+        const bubbla = () => tooltip.find("[role='tooltip']");
+        expect((bubbla().element as HTMLElement).style.display).toBe("none");
+
+        await tooltip.trigger("mouseenter");
+        vi.advanceTimersByTime(300);
+        await nextTick();
+        expect((bubbla().element as HTMLElement).style.display).toBe("");
+
+        await tooltip.trigger("keydown.esc");
+        expect((bubbla().element as HTMLElement).style.display).toBe("none");
+      } finally {
+        vi.useRealTimers();
+      }
+    });
+
+    it("hides a visible understeg tooltip on Escape without closing the panel", async () => {
+      vi.useFakeTimers();
+      try {
+        const nestad: Steg[] = [
+          {
+            id: "b",
+            rubrik: "Bedömning",
+            understeg: [
+              {
+                id: "m",
+                rubrik: "Manuell kontroll",
+                status: "kommande",
+                understeg: [{ id: "m1", rubrik: "Bedöm", status: "kommande" }],
+              },
+            ],
+          },
+        ];
+        const wrapper = mountIndikator({ steg: nestad, aktivtSteg: 0 });
+        await wrapper.findAll("li .steg-indikator__knapp")[0].trigger("click");
+        const tooltip = wrapper.find(".understeg__tooltip");
+        const knapp = wrapper.find(".understeg__knapp");
+
+        await tooltip.trigger("mouseenter");
+        vi.advanceTimersByTime(300);
+        await nextTick();
+        await knapp.trigger("keydown.esc");
+
+        const bubbla = tooltip.find("[role='tooltip']").element as HTMLElement;
+        expect(bubbla.style.display).toBe("none");
+        expect(wrapper.find(".steg-detaljer").exists()).toBe(true);
+
+        await knapp.trigger("keydown.esc");
+        expect(wrapper.find(".steg-detaljer").exists()).toBe(false);
+      } finally {
+        vi.useRealTimers();
+      }
+    });
+
+    it("keeps a flat process as before: no progress text, fill or tooltips", () => {
+      const wrapper = mountIndikator();
+
+      expect(wrapper.find(".steg-indikator__framsteg").exists()).toBe(false);
+      expect(wrapper.find(".steg-indikator__cirkel--delvis").exists()).toBe(false);
+      expect(wrapper.find("[role='tooltip']").exists()).toBe(false);
+      expect(
+        wrapper.findAll(".steg-indikator__knapp").filter((k) => k.attributes("aria-describedby")),
+      ).toHaveLength(0);
+    });
+
+    it("lists the understeg in the panel, not before the step is opened", async () => {
+      const wrapper = mountIndikator({ steg: medUndersteg, aktivtSteg: 1 });
+      await setBredd(1000);
+      expect(wrapper.find(".understeg").exists()).toBe(false);
+
+      await wrapper.findAll("li button")[1].trigger("click");
+
+      const rader = wrapper.findAll(".understeg__steg");
+      expect(rader).toHaveLength(4);
+      expect(rader[0].classes()).toContain("understeg__steg--klar");
+      expect(rader[1].attributes("aria-current")).toBe("step");
+    });
   });
 
   it("switches to vertical when each step gets less than the minimum width", async () => {
