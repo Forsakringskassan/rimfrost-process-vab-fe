@@ -14,7 +14,11 @@ src/
 ├── App.vue                    # Fristående dev-skal som simulerar portalens layout
 ├── components/
 │   ├── ProcessVy.vue          # Exponerad komponent: hämtar och visar processens steg
-│   └── StegIndikator/         # Responsiv stegindikator (från mallen)
+│   └── StegIndikator/         # Responsiv stegindikator (från mallen), med understeg
+│       ├── StegIndikator.vue  # Faserna, fyllnadsgrad och chevron
+│       ├── StegDetaljer.vue   # Detaljpanelen för den valda fasen
+│       ├── UnderstegLista.vue # Delstegen i panelen, utfällbara i en nivå till
+│       └── StegTooltip.vue    # Hovringstext i FTooltips utseende
 ├── utils/
 │   ├── fetchProcessSteg.ts    # Anrop mot BFF:en, felhantering
 │   └── processSteg.ts         # Svarstyper, validering och översättning till StegIndikatorn
@@ -51,6 +55,24 @@ Saknas ett steg med status `PAGAR` markeras första steget som inte är `KLAR`. 
 klara markeras inget steg som pågående. När `aktivitetId` ändras avbryts en pågående hämtning
 och svaret från den ignoreras.
 
+### Understeg
+
+Ett steg kan ha understeg i fältet `steg`, högst två nivåer under svarets `steg[]` (fas →
+delsteg → delsteg). Ett svar med djupare nivåer eller ogiltiga understeg räknas som oväntat
+svar och ger det neutrala meddelandet. Understegens status visas som den kommer från BFF:en.
+Fasernas markering räknas fram ur `PAGAR` som för ett platt svar.
+
+| Del | Visning |
+|---|---|
+| Fas eller delsteg med understeg | "x av y klara" under rubriken, tooltip "Öppna vy för delsteg" / "Stäng vy för delsteg" |
+| Pågående fas eller delsteg med klara understeg | Cirkeln eller markören fylls grönt moturs från toppen (`conic-gradient`, `--framsteg`) |
+| Detaljpanel | Öppnas först vid klick. Delstegen listas med bock, fylld ring och "Pågår", eller tom ring. Pågående delsteg visar sin beskrivning |
+| Delsteg med egna delsteg | Stängt från början, fälls ut indraget på plats. Chevronen pekar uppåt när det är utfällt |
+| Chevron mellan fas och panel | Stänger panelen i alla layouter. Inte ett eget tabbstopp |
+
+Tooltipen är en egen komponent i FTooltips utseende, eftersom FKUI saknar en hovringstooltip
+(NEST-Q3). Animationerna stängs av med `prefers-reduced-motion`.
+
 ## Kafka-integration
 
 Ingen.
@@ -74,3 +96,4 @@ Ingen egen hälsokontroll — statisk frontend, hälsa avgörs av webbservern so
 |---|---|
 | Anropet till BFF:en skickar ingen `Authorization`-header, på samma sätt som reglernas mikrofrontends | Skicka med handläggarens token när portalen erbjuder det till mikrofrontends |
 | `handlaggningId` tas emot men används inte | Använd när processvyn behöver ärendespecifik information |
+| VAB:s processbeskrivning har inga understeg ännu, så understegen syns bara i enhetstesterna | Lägg till understeg när FK har bestämt strukturen (NEST-Q1) |
