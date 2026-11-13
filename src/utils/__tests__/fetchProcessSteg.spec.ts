@@ -103,6 +103,34 @@ describe("fetchProcessSteg", () => {
     ["steg saknas", { processId: "vab", processnamn: "Vård av boskap" }],
     ["okänd status", { ...giltigtSvar, steg: [{ id: "a", rubrik: "A", status: "OKAND" }] }],
     ["rubrik saknas", { ...giltigtSvar, steg: [{ id: "a", status: "KLAR" }] }],
+    [
+      "understeg i tre nivåer",
+      {
+        ...giltigtSvar,
+        steg: [
+          {
+            id: "a",
+            rubrik: "A",
+            status: "PAGAR",
+            steg: [
+              {
+                id: "b",
+                rubrik: "B",
+                status: "PAGAR",
+                steg: [
+                  {
+                    id: "c",
+                    rubrik: "C",
+                    status: "PAGAR",
+                    steg: [{ id: "d", rubrik: "D", status: "PAGAR" }],
+                  },
+                ],
+              },
+            ],
+          },
+        ],
+      },
+    ],
   ])("returnerar fel när svaret har fel format (%s)", async (_, body) => {
     mockFetch(body);
 

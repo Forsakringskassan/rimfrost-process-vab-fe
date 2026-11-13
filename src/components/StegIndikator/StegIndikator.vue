@@ -11,7 +11,9 @@ import {
 } from "vue";
 import { FIcon } from "@fkui/vue";
 import StegDetaljer from "./StegDetaljer.vue";
-import { type Steg, type StegStatus, statusText } from "./steg";
+import StegTooltip from "./StegTooltip.vue";
+import UnderstegLista from "./UnderstegLista.vue";
+import { OPPNA_TEXT, STANG_TEXT, type Steg, type StegStatus, statusText } from "./steg";
 
 /**
  * horisontell: stegen på en rad, panelen under.
@@ -90,6 +92,35 @@ function statusFor(index: number): StegStatus {
   }
   return "kommande";
 }
+
+function understegKlara(s: Steg): number {
+  return s.understeg?.filter((u) => u.status === "klar").length ?? 0;
+}
+
+/**
+ * Andelen klara understeg i det pågående steget, som cirkeln fylls med.
+ * Undefined när det inte finns något att visa, så att cirkeln ser ut som vanligt.
+ */
+function framstegStil(s: Steg, index: number): Record<string, string> | undefined {
+  const antal = s.understeg?.length ?? 0;
+  const klara = understegKlara(s);
+  if (statusFor(index) !== "aktiv" || antal === 0 || klara === 0) {
+    return undefined;
+  }
+  return { "--framsteg": `${(klara / antal) * 100}%` };
+}
+
+/** Hovringstext för steg med understeg. Steg utan understeg har ingen. */
+function tooltipFor(s: Steg, index: number): string {
+  if (!s.understeg?.length) {
+    return "";
+  }
+  return valtSteg.value === index ? STANG_TEXT : OPPNA_TEXT;
+}
+
+const chevronTooltip = computed(() =>
+  valt.value?.steg.understeg?.length ? STANG_TEXT : "",
+);
 
 function knappId(index: number): string {
   return `${baseId}-steg-${index}`;
@@ -182,40 +213,55 @@ watch(
           { 'steg-indikator__steg--valt': valtSteg === index },
         ]"
       >
-        <button
-          :id="knappId(index)"
-          ref="knappar"
-          type="button"
-          class="steg-indikator__knapp"
-          :aria-expanded="valtSteg === index"
-          :aria-controls="panelId"
-          :aria-current="statusFor(index) === 'aktiv' ? 'step' : undefined"
-          @click="vaxla(index)"
+        <StegTooltip
+          v-slot="{ tooltipId }"
+          :text="tooltipFor(s, index)"
+          :justering="layout === 'horisontell' ? 'mitten' : 'start'"
         >
-          <span class="steg-indikator__cirkel" aria-hidden="true">
-            <svg
-              v-if="statusFor(index) === 'klar'"
-              class="steg-indikator__bock"
-              viewBox="0 0 24 24"
-              focusable="false"
+          <button
+            :id="knappId(index)"
+            ref="knappar"
+            type="button"
+            class="steg-indikator__knapp"
+            :aria-expanded="valtSteg === index"
+            :aria-controls="panelId"
+            :aria-current="statusFor(index) === 'aktiv' ? 'step' : undefined"
+            :aria-describedby="tooltipFor(s, index) ? tooltipId : undefined"
+            @click="vaxla(index)"
+          >
+            <span
+              class="steg-indikator__cirkel"
+              :class="{ 'steg-indikator__cirkel--delvis': framstegStil(s, index) }"
+              :style="framstegStil(s, index)"
+              aria-hidden="true"
             >
-              <polyline points="5 12.5 10 17.5 19 7.5" />
-            </svg>
-            <FIcon
-              v-else-if="s.ikon"
-              :name="s.ikon"
-              class="steg-indikator__ikon"
-            />
-            <span v-else class="steg-indikator__nummer">{{ index + 1 }}</span>
-          </span>
-          <span class="steg-indikator__rubrik">
-            {{ s.rubrik }}
-            <span class="sr-only">
-              , steg {{ index + 1 }} av {{ steg.length }},
-              {{ statusText[statusFor(index)] }}
+              <svg
+                v-if="statusFor(index) === 'klar'"
+                class="steg-indikator__bock"
+                viewBox="0 0 24 24"
+                focusable="false"
+              >
+                <polyline points="5 12.5 10 17.5 19 7.5" />
+              </svg>
+              <FIcon
+                v-else-if="s.ikon"
+                :name="s.ikon"
+                class="steg-indikator__ikon"
+              />
+              <span v-else class="steg-indikator__nummer">{{ index + 1 }}</span>
             </span>
-          </span>
-        </button>
+            <span class="steg-indikator__rubrik">
+              {{ s.rubrik }}
+              <span v-if="s.understeg?.length" class="steg-indikator__framsteg">
+                {{ understegKlara(s) }} av {{ s.understeg.length }} klara
+              </span>
+              <span class="sr-only">
+                , steg {{ index + 1 }} av {{ steg.length }},
+                {{ statusText[statusFor(index)] }}
+              </span>
+            </span>
+          </button>
+        </StegTooltip>
 
         <StegDetaljer
           v-if="layout === 'kompakt' && valt?.index === index"
@@ -225,30 +271,45 @@ watch(
           :etikett-id="knappId(index)"
           :rubrik="valt.steg.rubrik"
           :status="valt.status"
+          :stang-text="chevronTooltip"
           pil="ned"
           @stang="stang"
         >
           <slot name="detaljer" v-bind="valt">
             <p v-if="valt.steg.beskrivning">{{ valt.steg.beskrivning }}</p>
+            <UnderstegLista
+              v-if="valt.steg.understeg?.length"
+              :understeg="valt.steg.understeg"
+            />
           </slot>
         </StegDetaljer>
       </li>
     </ol>
 
+    <!-- Chevronen stänger panelen med musen. Tangentbordet använder stegknappen eller Esc. -->
     <div
       v-if="valt && layout === 'horisontell'"
       class="steg-indikator__chevronrad"
       aria-hidden="true"
     >
-      <svg
+      <StegTooltip
         :key="valt.index"
-        class="steg-indikator__chevron"
+        class="steg-indikator__chevronplats"
         :style="{ gridColumn: valt.index + 1 }"
-        viewBox="0 0 24 24"
-        focusable="false"
+        :text="chevronTooltip"
       >
-        <polyline points="5 8 12 15 19 8" />
-      </svg>
+        <button
+          type="button"
+          class="steg-indikator__chevronknapp"
+          tabindex="-1"
+          aria-hidden="true"
+          @click="stang"
+        >
+          <svg class="steg-indikator__chevron" viewBox="0 0 24 24" focusable="false">
+            <polyline points="5 8 12 15 19 8" />
+          </svg>
+        </button>
+      </StegTooltip>
     </div>
 
     <StegDetaljer
@@ -259,6 +320,7 @@ watch(
       :etikett-id="knappId(valt.index)"
       :rubrik="valt.steg.rubrik"
       :status="valt.status"
+      :stang-text="chevronTooltip"
       :pil="layout === 'vertikal' ? 'hoger' : 'ingen'"
       :style="
         layout === 'vertikal' ? { marginTop: `${panelForskjutning}px` } : {}
@@ -267,6 +329,10 @@ watch(
     >
       <slot name="detaljer" v-bind="valt">
         <p v-if="valt.steg.beskrivning">{{ valt.steg.beskrivning }}</p>
+        <UnderstegLista
+          v-if="valt.steg.understeg?.length"
+          :understeg="valt.steg.understeg"
+        />
       </slot>
     </StegDetaljer>
   </nav>
@@ -335,7 +401,12 @@ watch(
   height: var(--cirkel);
   border-radius: 50%;
   font-weight: 600;
-  transition: box-shadow 0.15s ease;
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .steg-indikator__cirkel {
+    transition: box-shadow 0.15s ease;
+  }
 }
 
 .steg-indikator__steg--klar .steg-indikator__cirkel {
@@ -352,6 +423,15 @@ watch(
   box-shadow:
     0 0 0 0.1875rem var(--farg-bakgrund),
     0 0 0 var(--ring) color-mix(in srgb, var(--farg-aktiv) 35%, transparent);
+}
+
+/* Pågående steg med klara understeg: cirkeln fylls moturs från toppen, så att
+   det klara (grönt) ligger till vänster om det som återstår (blått). */
+.steg-indikator__steg--aktiv .steg-indikator__cirkel--delvis {
+  background: conic-gradient(
+    var(--farg-aktiv) calc(100% - var(--framsteg)),
+    var(--farg-klar) calc(100% - var(--framsteg))
+  );
 }
 
 .steg-indikator__steg--kommande .steg-indikator__cirkel {
@@ -385,6 +465,13 @@ watch(
   font-size: 0.875rem;
   line-height: 1.3;
   overflow-wrap: break-word;
+}
+
+.steg-indikator__framsteg {
+  display: block;
+  font-size: 0.8125rem;
+  font-weight: 400;
+  color: var(--fkds-color-text-secondary, #5c5e62);
 }
 
 .steg-indikator__steg--valt .steg-indikator__rubrik {
@@ -421,6 +508,11 @@ watch(
   grid-template-columns: repeat(var(--steg-antal), minmax(0, 1fr));
 }
 
+/* Tooltipens pil pekar på cirkeln i vertikal och kompakt layout. */
+.steg-indikator {
+  --tooltip-pil-x: calc(var(--ring) + var(--cirkel) / 2);
+}
+
 .steg-indikator--horisontell .steg-indikator__knapp {
   flex-direction: column;
   align-items: center;
@@ -436,9 +528,35 @@ watch(
   height: var(--linje);
 }
 
-.steg-indikator--horisontell .steg-indikator__chevron {
+.steg-indikator__chevronknapp {
+  all: unset;
+  display: block;
+  cursor: pointer;
+  border-radius: 50%;
+}
+
+.steg-indikator__chevronknapp:hover {
+  background: var(--farg-kommande-bakgrund);
+}
+
+/* Vid hovring vänds chevronen uppåt: ett klick fäller ihop vyn. */
+.steg-indikator__chevronknapp:hover .steg-indikator__chevron {
+  rotate: 180deg;
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .steg-indikator__chevronknapp .steg-indikator__chevron {
+    transition: rotate 0.2s ease;
+  }
+}
+
+.steg-indikator--horisontell .steg-indikator__chevronplats {
   justify-self: center;
   margin-top: 0.25rem;
+}
+
+.steg-indikator--horisontell .steg-indikator__chevron {
+  display: block;
 }
 
 .steg-indikator--horisontell .steg-indikator__detaljer {
